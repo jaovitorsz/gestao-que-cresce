@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Ferramenta educativa de gestão financeira e sustentabilidade para pequenos negócios.">
+  <title>Gestão que Cresce - Gestão Financeira e Sustentabilidade</title>
+
+  <!-- Bibliotecas externas -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    .voz-card { background-color: #174b36; }
+    .voz-foto { background-image: var(--voz-foto); background-size: cover; background-position: center 28%; opacity: 1; transform: scale(1.02); transition: background-image .25s ease, opacity .25s ease; }
+    #voz-conteudo.animar-direita { animation: voz-entra-direita .48s cubic-bezier(.22,.7,.25,1); }
+    #voz-conteudo.animar-esquerda { animation: voz-entra-esquerda .48s cubic-bezier(.22,.7,.25,1); }
+    @keyframes voz-entra-direita { from { opacity: .35; transform: translateX(34px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes voz-entra-esquerda { from { opacity: .35; transform: translateX(-34px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* Microanimações discretas para dar vida à interface sem distrair. */
+    body { font-family: 'Inter', sans-serif; background: #f3f4f6; color: #1e293b; }
+    header { animation: entrada-suave .65s ease-out both; }
+    main { animation: entrada-suave .7s ease-out .08s both; }
+    #painel-financeiro > section, #painel-financeiro > div,
+    #painel-sustentabilidade > section { animation: cartao-entra .55s cubic-bezier(.2,.7,.25,1) both; }
+    #painel-financeiro > :nth-child(2), #painel-sustentabilidade > :nth-child(2) { animation-delay: .07s; }
+    #painel-financeiro > :nth-child(3), #painel-sustentabilidade > :nth-child(3) { animation-delay: .13s; }
+    #painel-financeiro > :nth-child(4), #painel-sustentabilidade > :nth-child(4) { animation-delay: .19s; }
+    #painel-financeiro article.bg-white, #painel-sustentabilidade article.bg-white {
+      transition: transform .24s ease, box-shadow .24s ease;
+    }
+    #painel-financeiro article.bg-white:hover, #painel-sustentabilidade article.bg-white:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, .08);
+    }
+    .painel-animar { animation: troca-de-aba .42s cubic-bezier(.2,.7,.25,1) both !important; }
+    @keyframes entrada-suave { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes cartao-entra { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes troca-de-aba { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+    input, select, button { font: inherit; }
+    .focus-ring:focus { outline: 2px solid #10b981; outline-offset: 2px; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      #voz-conteudo.animar-direita, #voz-conteudo.animar-esquerda { animation: none; }
+    }
+
+    /* Tela de apresentação exibida antes do acesso ao site. */
+    body.tela-inicial-ativa { overflow: hidden; }
+    #tela-inicial {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #071b13;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity .65s ease, visibility .65s ease;
+    }
+    #tela-inicial.saindo {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .intro-cartao {
+      width: min(100%, 780px);
+      min-height: 275px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 38px 28px 30px;
+      color: #fff;
+      background: #123f2e;
+      border: 1px solid rgba(190, 242, 208, .22);
+      border-radius: 22px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+      animation: intro-cartao-entra .75s cubic-bezier(.2,.7,.25,1) both;
+    }
+    .intro-icone {
+      width: 42px;
+      height: 42px;
+      color: #b7e7a4;
+      margin-bottom: 14px;
+    }
+    .intro-etiqueta {
+      color: #b7e7a4;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .intro-cartao h1 {
+      margin: 0;
+      font-size: clamp(25px, 4vw, 34px);
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: -.035em;
+    }
+    .intro-subtitulo {
+      margin-top: 10px;
+      color: #e1f2e7;
+      font-size: 14px;
+    }
+    #btn-entrar-site {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 24px;
+      padding: 12px 23px;
+      border: 0;
+      border-radius: 999px;
+      background: #b7e7a4;
+      color: #123f2e;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+      box-shadow: 0 5px 16px rgba(0,0,0,.12);
+    }
+    #btn-entrar-site:hover {
+      background: #c9f0b9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,.18);
+    }
+    #btn-entrar-site:focus-visible {
+      outline: 3px solid white;
+      outline-offset: 4px;
+    }
+    .intro-rodape {
+      margin-top: 30px;
+      color: #d2e8d9;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    @keyframes intro-cartao-entra {
+      from { opacity: 0; transform: translateY(18px) scale(.985); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @media (max-width: 520px) {
+      #tela-inicial { padding: 16px; }
+      .intro-cartao { min-height: 290px; padding: 32px 20px 25px; }
+      .intro-rodape { margin-top: 24px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #tela-inicial, .intro-cartao, #btn-entrar-site { transition: none; animation: none; }
+    }
+    .botao-guia { display:flex; width:100%; align-items:center; justify-content:center; gap:10px; padding:14px 20px; border:0; border-radius:999px; background:#237a45; color:#fff; font-size:14px; font-weight:800; cursor:pointer; transition:transform .2s ease,background .2s ease,box-shadow .2s ease; box-shadow:0 5px 16px rgba(15,23,42,.10); }
+    .botao-guia:hover { background:#1d653a; transform:translateY(-2px); box-shadow:0 8px 20px rgba(15,23,42,.14); }
+    .botao-guia:focus-visible { outline:3px solid #86efac; outline-offset:3px; }
+    .seletor-periodo { display:flex; flex-wrap:wrap; align-items:end; gap:12px; }
+    .seletor-periodo label { display:flex; flex-direction:column; gap:5px; font-size:11px; font-weight:700; color:#475569; }
+    .seletor-periodo select { min-width:145px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; padding:9px 11px; font-size:13px; color:#1e293b; }
+    .pagina-guia { max-width:900px; margin:0 auto; }
+    /* Garante contraste no cabeçalho verde dos dois guias educativos. */
+    #guia-financeiro > div:first-child,
+    #guia-sustentabilidade > div:first-child,
+    #guia-financeiro > div:first-child p,
+    #guia-financeiro > div:first-child h2,
+    #guia-sustentabilidade > div:first-child p,
+    #guia-sustentabilidade > div:first-child h2 {
+      color: #ffffff !important;
+    }
+    .pagina-guia .guia-bloco { background:#fff; border:1px solid #e2e8f0; border-radius:18px; padding:22px; box-shadow:0 2px 8px rgba(15,23,42,.04); }
+    .pagina-guia h3 { font-weight:800; color:#14532d; font-size:17px; margin-bottom:8px; }
+    .pagina-guia p, .pagina-guia li { color:#475569; font-size:14px; line-height:1.7; }
+    .pagina-guia ul { list-style:disc; padding-left:21px; margin-top:8px; }
+
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+  <section id="tela-inicial" aria-label="Apresentação do site">
+    <div class="intro-cartao">
+      <svg class="intro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 21v-8"></path>
+        <path d="M12 13C12 7 16 4 21 4c0 5-3 9-9 9Z"></path>
+        <path d="M12 16C12 11 9 8 4 8c0 5 3 8 8 8"></path>
+      </svg>
+      <p class="intro-etiqueta">Educação · Gestão · Sustentabilidade</p>
+      <h1>Gestão que Cresce</h1>
+      <p class="intro-subtitulo">Organizar hoje, crescer com consciência amanhã.</p>
+      <button id="btn-entrar-site" type="button">
+        <span aria-hidden="true">➜</span>
+        Entrar no site
+      </button>
+      <p class="intro-rodape">Uma iniciativa para fortalecer pequenos negócios e incentivar práticas sustentáveis.</p>
+    </div>
+  </section>
+
+  <header class="bg-emerald-700 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="bg-white/20 p-2.5 rounded-xl">
+          <i data-lucide="trending-up" class="w-7 h-7"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">Gestão que Cresce</h1>
+          <p class="text-emerald-100 text-sm">Gestão financeira e práticas sustentáveis para pequenos negócios</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap justify-center gap-2">
+        <button id="aba-financeiro" type="button" aria-controls="painel-financeiro" aria-selected="true" class="bg-white text-emerald-800 text-xs font-bold px-4 py-2 rounded-lg transition focus-ring">Gestão Financeira</button>
+        <button id="aba-sustentabilidade" type="button" aria-controls="painel-sustentabilidade" aria-selected="false" class="bg-emerald-900/50 hover:bg-emerald-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition focus-ring">Sustentabilidade</button>
+        <button id="btn-exemplo" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition border border-emerald-500 focus-ring">
+          Restaurar exemplo
+        </button>
+        <button id="btn-limpar" type="button" class="bg-emerald-800 hover:bg-emerald-900 text-emerald-100 text-xs font-semibold px-3 py-2 rounded-lg transition focus-ring">
+          Zerar mês financeiro
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full space-y-6">
+    <div id="painel-financeiro" class="space-y-6">
+    <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" aria-label="Período financeiro">
+      <div><h2 class="font-bold text-slate-800">Acompanhe seu negócio por período</h2><p class="text-xs text-slate-500 mt-1">Escolha o mês e o ano antes de consultar ou registrar movimentações.</p></div>
+      <div class="seletor-periodo"><label for="mes-financeiro">Mês<select id="mes-financeiro" class="focus-ring"></select></label><label for="ano-financeiro">Ano<select id="ano-financeiro" class="focus-ring"></select></label></div>
+    </section>
+    <section id="alerta-saude" aria-live="polite" class="p-4 rounded-xl border flex items-center gap-3 transition-all duration-300">
+      <i id="alerta-icone" data-lucide="info" class="w-6 h-6 shrink-0"></i>
+      <div>
+        <h2 id="alerta-titulo" class="font-semibold text-sm">Saúde financeira do negócio</h2>
+        <p id="alerta-texto" class="text-sm opacity-90">Carregando análise...</p>
+      </div>
+    </section>
+
+    <button type="button" class="botao-guia" data-abrir-guia="financeiro">Aprenda a controlar seus gastos <span aria-hidden="true">→</span></button>
+    <section aria-label="Resumo financeiro" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <article class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Entradas (vendas)</p>
+            <h2 id="total-entradas" class="text-2xl font-bold text-emerald-600 mt-1">R$ 0,00</h2>
+          </div>
+          <div class="bg-emerald-50 p-2.5 rounded-xl text-emerald-600"><i data-lucide="arrow-up-circle" class="w-6 h-6"></i></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Tudo o que entrou no caixa da loja</p>
+      </article>
+
+      <article class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Custos da empresa</p>
+            <h2 id="total-saidas" class="text-2xl font-bold text-rose-600 mt-1">R$ 0,00</h2>
+          </div>
+          <div class="bg-rose-50 p-2.5 rounded-xl text-rose-600"><i data-lucide="arrow-down-circle" class="w-6 h-6"></i></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Fornecedores, luz, aluguel e insumos</p>
+      </article>
+
+      <article class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pró-labore (dono)</p>
+            <h2 id="total-prolabore" class="text-2xl font-bold text-purple-600 mt-1">R$ 0,00</h2>
+          </div>
+          <div class="bg-purple-50 p-2.5 rounded-xl text-purple-600"><i data-lucide="user-check" class="w-6 h-6"></i></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Retirada do empreendedor</p>
+      </article>
+
+      <article class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo da loja</p>
+            <h2 id="saldo-final" class="text-2xl font-bold text-slate-800 mt-1">R$ 0,00</h2>
+          </div>
+          <div class="bg-blue-50 p-2.5 rounded-xl text-blue-600"><i data-lucide="wallet" class="w-6 h-6"></i></div>
+        </div>
+        <p class="text-xs text-slate-500 mt-3">Saldo após custos e pró-labore</p>
+      </article>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <article class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <h2 class="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-600"></i> Novo lançamento
+        </h2>
+        <form id="form-lancamento" class="space-y-4">
+          <div>
+            <label for="tipo" class="block text-xs font-semibold text-slate-600 mb-1">Tipo de movimentação</label>
+            <select id="tipo" required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm bg-slate-50 focus-ring">
+              <option value="entrada">Entrada (venda / recebimento)</option>
+              <option value="saida">Custo da loja (fornecedor / conta)</option>
+              <option value="prolabore">Retirada do dono (pró-labore)</option>
+            </select>
+          </div>
+          <div>
+            <label for="descricao" class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
+            <input id="descricao" type="text" maxlength="100" placeholder="Ex.: vendas do dia, compra de farinha..." required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus-ring">
+          </div>
+          <div>
+            <label for="valor" class="block text-xs font-semibold text-slate-600 mb-1">Valor (R$)</label>
+            <input id="valor" type="number" min="0.01" step="0.01" placeholder="0,00" required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus-ring">
+          </div>
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition shadow-sm focus-ring">
+            Adicionar ao caixa
+          </button>
+          <p id="mensagem-form" class="text-xs text-slate-500" aria-live="polite">Os lançamentos ficam salvos neste navegador.</p>
+        </form>
+      </article>
+
+      <article class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+        <h2 class="font-bold text-lg text-slate-800 mb-2 flex items-center gap-2">
+          <i data-lucide="pie-chart" class="w-5 h-5 text-emerald-600"></i> Para onde vai o dinheiro?
+        </h2>
+        <div class="relative h-64 w-full flex items-center justify-center">
+          <canvas id="graficoFinanceiro" aria-label="Gráfico de distribuição financeira" role="img"></canvas>
+        </div>
+        <p class="text-xs text-center text-slate-400 mt-2">Atualizado automaticamente a cada lançamento</p>
+        <p id="comparacao-financeira" class="text-xs text-center text-slate-600 mt-3 bg-slate-50 rounded-lg p-3" aria-live="polite">Selecione um período para comparar com o mês anterior.</p>
+      </article>
+
+      <article class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+        <div>
+          <h2 class="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
+            <i data-lucide="calculator" class="w-5 h-5 text-emerald-600"></i> Calculadora de preço justo
+          </h2>
+          <div class="space-y-3">
+            <div>
+              <label for="calc-custo" class="block text-xs font-semibold text-slate-600 mb-1">Custo do produto/material (R$)</label>
+              <input type="number" id="calc-custo" min="0" step="0.01" value="20" oninput="calcularPreco()" class="w-full rounded-xl border border-slate-200 p-2 text-sm focus-ring">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label for="calc-taxa" class="block text-xs font-semibold text-slate-600 mb-1">Taxa cartão/app (%)</label>
+                <input type="number" id="calc-taxa" min="0" max="99" step="0.1" value="3" oninput="calcularPreco()" class="w-full rounded-xl border border-slate-200 p-2 text-sm focus-ring">
+              </div>
+              <div>
+                <label for="calc-lucro" class="block text-xs font-semibold text-slate-600 mb-1">Margem desejada (%)</label>
+                <input type="number" id="calc-lucro" min="0" max="99" step="0.1" value="25" oninput="calcularPreco()" class="w-full rounded-xl border border-slate-200 p-2 text-sm focus-ring">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-5 bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+          <p class="text-xs font-semibold text-emerald-800">Preço ideal de venda</p>
+          <p id="resultado-preco" class="text-2xl font-extrabold text-emerald-700 mt-1">R$ 0,00</p>
+          <div class="border-t border-emerald-200 my-3"></div>
+          <p class="text-xs text-emerald-800">Lucro estimado por unidade</p>
+          <p id="resultado-lucro-un" class="font-bold text-emerald-700 mt-1">R$ 0,00</p>
+          <p id="mensagem-calculadora" class="text-xs text-rose-700 mt-2" aria-live="polite"></p>
+        </div>
+        <p class="text-xs text-slate-400 mt-3">Cálculo simplificado: não inclui impostos, custos fixos ou outras despesas não informadas.</p>
+      </article>
+    </section>
+
+    <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 class="font-bold text-lg text-slate-800">Histórico de movimentações</h2>
+          <p id="contador-itens" class="text-xs text-slate-500">0 registros</p>
+        </div>
+        <p class="text-xs text-slate-400">Mais recentes primeiro</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left">
+          <thead class="text-xs uppercase text-slate-500 bg-slate-50">
+            <tr>
+              <th class="px-3 py-3 rounded-l-lg">Categoria</th>
+              <th class="px-3 py-3">Descrição</th>
+              <th class="px-3 py-3 text-right">Valor</th>
+              <th class="px-3 py-3 text-right rounded-r-lg">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="lista-lancamentos" class="divide-y divide-slate-100">
+            <tr><td colspan="4" class="px-3 py-6 text-center text-slate-400">Nenhum lançamento registrado.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    </div>
+
+    <section id="painel-sustentabilidade" class="space-y-6" hidden>
+      <div class="bg-gradient-to-r from-emerald-800 to-teal-700 text-white rounded-2xl p-6 md:p-8 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-widest text-white">Gestão que Cresce</p>
+            <h2 class="text-2xl md:text-3xl font-extrabold mt-2">Sustentabilidade na prática</h2>
+            <p class="text-sm text-white mt-2 max-w-2xl">Acompanhe o consumo de água e energia e a geração e destinação de resíduos. Pequenas mudanças ajudam a reduzir impactos ambientais e também podem diminuir despesas.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="bg-white/15 border border-white/20 rounded-full px-3 py-1.5 text-xs font-semibold">ODS 6 · Água</span>
+            <span class="bg-white/15 border border-white/20 rounded-full px-3 py-1.5 text-xs font-semibold">ODS 7 · Energia</span>
+            <span class="bg-white/15 border border-white/20 rounded-full px-3 py-1.5 text-xs font-semibold">ODS 12 · Consumo responsável</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="botao-guia" data-abrir-guia="sustentabilidade">Aprenda a economizar recursos <span aria-hidden="true">→</span></button>
+      <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" aria-label="Período de sustentabilidade">
+        <div><h3 class="font-bold text-slate-800">Período dos indicadores</h3><p class="text-xs text-slate-500 mt-1">Os registros, indicadores e gráficos acompanharão o mês e o ano selecionados.</p></div>
+        <div class="seletor-periodo"><label for="mes-ambiental">Mês<select id="mes-ambiental" class="focus-ring"></select></label><label for="ano-ambiental">Ano<select id="ano-ambiental" class="focus-ring"></select></label></div>
+      </section>
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" aria-label="Indicadores ambientais">
+        <article class="bg-white p-5 rounded-2xl shadow-sm border border-sky-100">
+          <div class="flex items-center justify-between"><p class="text-xs font-bold uppercase tracking-wider text-slate-500">Água consumida</p><span class="bg-sky-50 text-sky-700 rounded-xl p-2"><i data-lucide="droplets" class="w-5 h-5"></i></span></div>
+          <p id="total-agua" class="text-2xl font-extrabold text-sky-700 mt-3">0 L</p><p class="text-xs text-slate-500 mt-1">Litros registrados</p>
+        </article>
+        <article class="bg-white p-5 rounded-2xl shadow-sm border border-amber-100">
+          <div class="flex items-center justify-between"><p class="text-xs font-bold uppercase tracking-wider text-slate-500">Energia consumida</p><span class="bg-amber-50 text-amber-700 rounded-xl p-2"><i data-lucide="zap" class="w-5 h-5"></i></span></div>
+          <p id="total-energia" class="text-2xl font-extrabold text-amber-700 mt-3">0 kWh</p><p class="text-xs text-slate-500 mt-1">Quilowatt-hora registrados</p>
+        </article>
+        <article class="bg-white p-5 rounded-2xl shadow-sm border border-orange-100">
+          <div class="flex items-center justify-between"><p class="text-xs font-bold uppercase tracking-wider text-slate-500">Resíduos gerados</p><span class="bg-orange-50 text-orange-700 rounded-xl p-2"><i data-lucide="trash-2" class="w-5 h-5"></i></span></div>
+          <p id="total-residuos" class="text-2xl font-extrabold text-orange-700 mt-3">0 kg</p><p class="text-xs text-slate-500 mt-1">Quilos registrados</p>
+        </article>
+        <article class="bg-white p-5 rounded-2xl shadow-sm border border-emerald-100">
+          <div class="flex items-center justify-between"><p class="text-xs font-bold uppercase tracking-wider text-slate-500">Materiais reciclados</p><span class="bg-emerald-50 text-emerald-700 rounded-xl p-2"><i data-lucide="recycle" class="w-5 h-5"></i></span></div>
+          <p id="total-reciclados" class="text-2xl font-extrabold text-emerald-700 mt-3">0 kg</p><p class="text-xs text-slate-500 mt-1">Quilos destinados à reciclagem</p>
+        </article>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <article class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2"><i data-lucide="clipboard-plus" class="w-5 h-5 text-emerald-600"></i> Registrar indicador</h3>
+          <p class="text-xs text-slate-500 mt-1 mb-5">Informe os dados de consumo ou descarte do negócio.</p>
+          <form id="form-ambiental" class="space-y-4">
+            <div><label for="ambiental-tipo" class="block text-xs font-semibold text-slate-600 mb-1">Tipo de registro</label>
+              <select id="ambiental-tipo" required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm bg-slate-50 focus-ring">
+                <option value="agua">Consumo de água (litros)</option><option value="energia">Consumo de energia (kWh)</option><option value="residuos">Resíduos gerados (kg)</option><option value="reciclados">Materiais reciclados (kg)</option>
+              </select>
+            </div>
+            <div><label for="ambiental-descricao" class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label><input id="ambiental-descricao" type="text" maxlength="100" required placeholder="Ex.: conta de água de outubro" class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus-ring"></div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><label for="ambiental-quantidade" class="block text-xs font-semibold text-slate-600 mb-1">Quantidade</label><input id="ambiental-quantidade" type="number" min="0.01" step="0.01" required placeholder="0" class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus-ring"></div>
+              <div><label for="ambiental-data" class="block text-xs font-semibold text-slate-600 mb-1">Data</label><input id="ambiental-data" type="date" required class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus-ring"></div>
+            </div>
+            <div><label for="ambiental-custo" class="block text-xs font-semibold text-slate-600 mb-1">Custo relacionado (R$) · opcional</label><input id="ambiental-custo" type="number" min="0" step="0.01" placeholder="Ex.: valor da conta" class="w-full rounded-xl border border-slate-200 p-2.5 text-sm focus-ring"><p class="text-[11px] text-slate-400 mt-1">Esse valor é apenas informativo e não altera automaticamente o caixa financeiro.</p></div>
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition focus-ring">Salvar registro ambiental</button>
+            <p id="mensagem-ambiental" class="text-xs text-slate-500" aria-live="polite">Os registros ambientais ficam salvos neste navegador, separados do financeiro.</p>
+          </form>
+        </article>
+
+        <article class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3"><div><h3 class="font-bold text-lg text-slate-800">Evolução do consumo</h3><p class="text-xs text-slate-500 mt-1">Compare os meses do ano selecionado. Cada indicador mantém sua própria unidade.</p></div>
+            <select id="filtro-grafico-ambiental" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus-ring" aria-label="Indicador exibido no gráfico"><option value="agua">Água (L)</option><option value="energia">Energia (kWh)</option><option value="residuos">Resíduos (kg)</option><option value="reciclados">Reciclados (kg)</option></select>
+          </div>
+          <div class="relative h-72 w-full"><canvas id="graficoAmbiental" role="img" aria-label="Gráfico mensal dos indicadores ambientais"></canvas></div>
+          <p id="legenda-grafico-ambiental" class="text-xs text-center text-slate-400 mt-2">Os dados são agrupados por mês conforme as datas informadas.</p>
+        </article>
+        <article class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <h3 class="font-bold text-lg text-slate-800">Distribuição dos custos</h3><p class="text-xs text-slate-500 mt-1">Veja quanto cada recurso representou no mês selecionado.</p>
+          <div class="relative h-64 w-full mt-3"><canvas id="graficoCustosAmbientais" role="img" aria-label="Gráfico de distribuição dos custos ambientais"></canvas></div>
+          <p id="legenda-custos-ambientais" class="text-xs text-center text-slate-400 mt-2">Informe os custos relacionados aos registros para visualizar a distribuição.</p>
+        </article>
+      </div>
+
+      <section aria-label="Dicas de sustentabilidade" class="space-y-3">
+        <div><h3 class="font-bold text-lg text-slate-800">Dicas para colocar em prática</h3><p class="text-xs text-slate-500">Ações simples que podem fazer diferença na rotina do estabelecimento.</p></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+          <div class="space-y-4">
+            <article class="bg-sky-50 border border-sky-100 rounded-2xl p-5"><div class="flex items-center gap-2 text-sky-800 font-bold"><i data-lucide="droplets" class="w-5 h-5"></i> ODS 6 · Água</div><ul class="text-sm text-slate-700 mt-3 space-y-2 list-disc pl-5"><li>Verifique torneiras, descargas e conexões para identificar vazamentos.</li><li>Instale arejadores e evite deixar a água correndo durante a limpeza.</li><li>Acompanhe a conta mensal para perceber aumentos fora do padrão.</li></ul></article>
+            <article class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5"><div class="flex items-center gap-2 text-emerald-800 font-bold"><i data-lucide="recycle" class="w-5 h-5"></i> ODS 12 · Consumo responsável</div><ul class="text-sm text-slate-700 mt-3 space-y-2 list-disc pl-5"><li>Separe papel, plástico, vidro e metal limpos para a coleta seletiva.</li><li>Planeje compras e estoque para evitar perdas e produtos vencidos.</li><li>Prefira embalagens reutilizáveis ou recicláveis quando viável.</li></ul></article>
+          </div>
+          <article class="bg-amber-50 border border-amber-100 rounded-2xl p-5 h-full"><div class="flex items-center gap-2 text-amber-800 font-bold"><i data-lucide="zap" class="w-5 h-5"></i> ODS 7 · Energia</div><ul class="text-sm text-slate-700 mt-3 space-y-2 list-disc pl-5"><li>Troque lâmpadas antigas por modelos LED quando possível.</li><li>Desligue equipamentos e iluminação em ambientes sem uso.</li><li>Faça manutenção de geladeiras, freezers e aparelhos de climatização.</li></ul></article>
+          <article id="voz-card" class="voz-card relative isolate overflow-hidden rounded-2xl p-5 md:p-6 min-h-[440px] md:min-h-full flex flex-col justify-between text-white shadow-sm" style="--voz-foto:url('https://commons.wikimedia.org/wiki/Special:FilePath/Wangari_Maathai_portrait.jpg')">
+            <div class="absolute inset-0 -z-10 voz-foto" aria-hidden="true"></div>
+            <div class="absolute inset-0 -z-10 bg-gradient-to-b from-emerald-950/75 via-emerald-900/70 to-emerald-950/90" aria-hidden="true"></div>
+            <div class="flex items-start justify-between gap-3"><div><span class="inline-flex rounded-full border border-emerald-300/70 bg-emerald-950/30 px-2.5 py-1 text-[10px] font-bold tracking-wider text-emerald-100">INSPIRAÇÃO</span><h3 class="font-bold text-lg mt-3">Vozes da sustentabilidade</h3><p class="text-xs text-emerald-100/90 mt-1">Ideias para inspirar mudanças.</p></div><i data-lucide="leaf" class="w-6 h-6 text-emerald-100 shrink-0"></i></div>
+            <div id="voz-conteudo" class="mt-10"><p id="voz-frase" class="text-lg md:text-xl font-bold leading-relaxed drop-shadow-sm">A proteção da natureza também está ligada à dignidade das comunidades e à construção de um futuro melhor.</p><div class="h-px bg-white/50 my-4"></div><div class="flex items-end justify-between gap-3"><div><p id="voz-nome" class="text-sm font-extrabold tracking-wide">Wangari Maathai</p><p class="text-[11px] text-emerald-100 mt-1">Uma voz que inspira a sustentabilidade</p></div><p id="voz-contador" class="text-xs text-emerald-100 whitespace-nowrap">1 de 6</p></div></div>
+            <div class="flex items-center justify-between gap-3 mt-6"><p class="text-[10px] text-emerald-100/90">PENSAR NO FUTURO É AGIR NO PRESENTE.</p><div class="flex gap-2"><button id="voz-anterior" type="button" aria-label="Ideia anterior" class="border border-white/40 hover:bg-white/15 rounded-lg px-3 py-2 text-white focus-ring">←</button><button id="voz-proxima" type="button" aria-label="Próxima ideia" class="border border-white/40 hover:bg-white/15 rounded-lg px-3 py-2 text-white focus-ring">→</button></div></div>
+          </article>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-3">As frases exibidas são sínteses interpretativas de ideias associadas a essas personalidades, não citações literais. Fotografias: Wikimedia Commons; os créditos e licenças podem ser consultados nas páginas de cada imagem.</p>
+      </section>
+
+      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4"><div><h3 class="font-bold text-lg text-slate-800">Histórico ambiental</h3><p id="contador-ambiental" class="text-xs text-slate-500">0 registros</p></div><p class="text-xs text-slate-400">Mais recentes primeiro</p></div>
+        <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="text-xs uppercase text-slate-500 bg-slate-50"><tr><th class="px-3 py-3 rounded-l-lg">Indicador</th><th class="px-3 py-3">Descrição</th><th class="px-3 py-3">Data</th><th class="px-3 py-3 text-right">Quantidade</th><th class="px-3 py-3 text-right">Custo</th><th class="px-3 py-3 text-right rounded-r-lg">Ação</th></tr></thead><tbody id="lista-ambiental" class="divide-y divide-slate-100"><tr><td colspan="6" class="px-3 py-6 text-center text-slate-400">Nenhum registro ambiental.</td></tr></tbody></table></div>
+      </section>
+      <p class="text-[11px] text-center text-slate-400">Os indicadores são preenchidos manualmente pelo usuário e servem para acompanhamento educativo. Não representam medição automática nem certificação ambiental.</p>
+    </section>
+
+    <section id="guia-financeiro" class="pagina-guia space-y-5" hidden>
+      <div class="bg-gradient-to-r from-emerald-800 to-teal-700 text-white rounded-2xl p-7 md:p-9 shadow-sm"><p class="text-xs font-bold uppercase tracking-widest text-white">Guia educativo</p><h2 class="text-2xl md:text-3xl font-extrabold mt-2">Aprenda a controlar seus gastos</h2><p class="text-sm text-white mt-2">Organização financeira começa com informação simples e acompanhamento constante.</p></div>
+      <article class="guia-bloco"><h3>1. Separe os gastos fixos e variáveis</h3><p>Gastos fixos tendem a se repetir, como aluguel, internet e salários. Gastos variáveis mudam conforme a atividade, como matéria-prima, embalagens, taxas e entregas. Classificar cada despesa ajuda a entender o que pode ser planejado e o que depende do volume de vendas.</p></article>
+      <article class="guia-bloco"><h3>2. Registre todas as entradas e saídas</h3><p>Anote vendas, recebimentos, compras, contas e retiradas do proprietário. Registros completos ajudam a evitar decisões baseadas apenas no saldo disponível no caixa. Faça os lançamentos com frequência e confira se os valores correspondem aos comprovantes.</p></article>
+      <article class="guia-bloco"><h3>3. Identifique despesas que podem ser reduzidas</h3><ul><li>Compare preços e condições de fornecedores.</li><li>Planeje compras para evitar excesso de estoque e perdas.</li><li>Revise assinaturas, taxas e serviços pouco utilizados.</li><li>Acompanhe consumo de água, energia e materiais.</li></ul><p class="mt-3">Reduzir custos não significa comprometer a qualidade. Avalie o impacto de cada mudança no atendimento e na operação.</p></article>
+      <article class="guia-bloco"><h3>4. Não confunda faturamento com lucro</h3><p>Faturamento é o total das vendas em determinado período. Para avaliar o resultado, é necessário considerar custos e despesas. Um negócio pode vender bastante e ainda ter dificuldades se os gastos forem maiores que as entradas.</p></article>
+      <article class="guia-bloco"><h3>5. Planeje e compare os meses</h3><p>Observe os períodos em que as despesas aumentam, antecipe contas recorrentes e, quando possível, reserve parte dos resultados para imprevistos. A comparação mensal ajuda a identificar mudanças e fazer perguntas antes de tomar decisões.</p></article>
+      <button type="button" class="botao-guia" data-voltar-painel="financeiro">← Voltar ao painel</button>
+    </section>
+
+    <section id="guia-sustentabilidade" class="pagina-guia space-y-5" hidden>
+      <div class="bg-gradient-to-r from-emerald-800 to-teal-700 text-white rounded-2xl p-7 md:p-9 shadow-sm"><p class="text-xs font-bold uppercase tracking-widest text-white">Guia educativo</p><h2 class="text-2xl md:text-3xl font-extrabold mt-2">Aprenda a economizar recursos</h2><p class="text-sm text-white mt-2">Pequenas mudanças na rotina podem reduzir desperdícios, custos e impactos ambientais.</p></div>
+
+      <section class="guia-bloco space-y-4" aria-labelledby="titulo-ods">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Sustentabilidade e desenvolvimento</p>
+          <h3 id="titulo-ods">O que são os ODS e por que eles importam para o seu negócio?</h3>
+          <p>Os Objetivos de Desenvolvimento Sustentável (ODS) são 17 objetivos definidos pelos países membros da Organização das Nações Unidas (ONU), como parte da Agenda 2030. Eles propõem caminhos para melhorar a qualidade de vida, proteger o meio ambiente e promover o desenvolvimento econômico e social.</p>
+          <p class="mt-2">Mesmo sendo um negócio de pequeno porte, sua empresa pode contribuir com atitudes do dia a dia. Economizar água e energia, evitar perdas de materiais e dar destino adequado aos resíduos também ajuda a usar melhor os recursos e controlar despesas.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <article class="rounded-xl border border-sky-200 bg-sky-50 p-4">
+            <div class="flex items-center gap-2 text-sky-900 font-extrabold"><span class="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-600 text-white text-sm">6</span><span>ODS 6 · Água potável e saneamento</span></div>
+            <p class="mt-3">Incentiva o uso responsável da água e o acesso ao saneamento.</p>
+            <p class="mt-2 font-bold text-sky-900">No negócio:</p>
+            <p>Mais controle sobre água, energia e materiais utilizados.</p>
+          </article>
+          <article class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <div class="flex items-center gap-2 text-amber-900 font-extrabold"><span class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500 text-white text-sm">7</span><span>ODS 7 · Energia limpa e acessível</span></div>
+            <p class="mt-3">Busca ampliar o acesso à energia confiável, sustentável e moderna.</p>
+            <p class="mt-2 font-bold text-amber-900">No negócio:</p>
+            <p>Usar lâmpadas eficientes, desligar equipamentos sem uso e fazer manutenção ajuda a evitar consumo desnecessário e controlar custos.</p>
+          </article>
+          <article class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <div class="flex items-center gap-2 text-emerald-900 font-extrabold"><span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white text-sm">12</span><span>ODS 12 · Consumo e produção responsáveis</span></div>
+            <p class="mt-3">Estimula produzir e consumir melhor, reduzindo desperdícios e resíduos.</p>
+            <p class="mt-2 font-bold text-emerald-900">No negócio:</p>
+            <p>Planejar compras, controlar o estoque, aproveitar materiais e separar resíduos reduz perdas e compras desnecessárias.</p>
+          </article>
+        </div>
+        <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
+          <h4 class="font-extrabold text-slate-800">O que o empreendedor ganha com isso?</h4>
+          <ul class="mt-2 space-y-1.5">
+            <li>Mais controle sobre água, energia e materiais utilizados..</li>
+            <li> Menos desperdício e possibilidade de reduzir custos operacionais.</li>
+            <li> Melhor organização da rotina e das compras.</li>
+            <li> Uma relação mais responsável com clientes, equipe e comunidade.</li>
+          </ul>
+        </div>
+        <p class="text-xs">Importante: adotar essas práticas pode contribuir com os ODS, mas utilizar este site ou realizar algumas ações não significa que a empresa tenha certificação ou tenha alcançado esses objetivos.</p>
+        <p class="font-semibold text-emerald-900">Você não precisa transformar seu negócio de uma vez. Começar acompanhando seus recursos e evitando desperdícios já é um passo importante.</p>
+      </section>
+
+      <div class="px-1 pt-1"><h3 class="text-lg font-extrabold text-slate-800">Como aplicar no dia a dia</h3><p class="text-sm text-slate-500">Ações simples para começar a colocar esses objetivos em prática.</p></div>
+      <article class="guia-bloco"><h3>1. Economize água</h3><ul><li>Verifique torneiras, descargas, mangueiras e conexões para identificar vazamentos.</li><li>Use baldes ou equipamentos adequados em vez de manter a água correndo.</li><li>Planeje a limpeza e, quando possível, reutilize água em atividades permitidas e seguras.</li><li>Acompanhe o consumo mensal para investigar aumentos fora do padrão.</li></ul></article>
+      <article class="guia-bloco"><h3>2. Reduza o consumo de energia</h3><ul><li>Substitua lâmpadas antigas por LED quando for viável.</li><li>Desligue iluminação e equipamentos quando não estiverem em uso.</li><li>Faça manutenção de geladeiras, freezers e aparelhos de climatização.</li><li>Evite abrir equipamentos de refrigeração sem necessidade e mantenha suas borrachas de vedação em boas condições.</li></ul></article>
+      <article class="guia-bloco"><h3>3. Diminua desperdícios e resíduos</h3><ul><li>Planeje compras e estoque para evitar produtos vencidos ou materiais sem uso.</li><li>Separe papel, plástico, vidro e metal limpos conforme a coleta disponível na região.</li><li>Prefira materiais reutilizáveis ou recicláveis quando forem adequados à atividade.</li><li>Observe quais resíduos são gerados com maior frequência e busque alternativas para reduzi-los.</li></ul></article>
+      <article class="guia-bloco"><h3>4. Envolva a equipe e acompanhe os resultados</h3><p>Explique as práticas para todos que trabalham no negócio, distribua responsabilidades e acompanhe os indicadores. Registre quantidades e custos reais das contas e dos resíduos; não estime valores como se fossem medições. Compare períodos equivalentes para perceber tendências.</p></article>
+      <article class="guia-bloco"><h3>5. Comece com mudanças possíveis</h3><p>Escolha uma ou duas ações que façam sentido para a realidade do estabelecimento, acompanhe sua execução e avalie os resultados. Sustentabilidade também envolve segurança, qualidade e viabilidade econômica.</p></article>
+      <button type="button" class="botao-guia" data-voltar-painel="sustentabilidade">← Voltar ao painel</button>
+    </section>
+
+    <footer class="text-center text-xs text-slate-400 pb-4">
+      Projeto Gestão que Cresce • Ferramenta educativa de gestão financeira e sustentabilidade
+    </footer>
+  </main>
+
+  <script>
+    'use strict';
+
+    const CHAVE_STORAGE = 'pngf_dados_v3';
+    const CHAVE_STORAGE_ANTIGA = 'pngf_dados_v2';
+    const nomesMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const agoraInicial = new Date();
+    const periodoInicial = { mes: agoraInicial.getMonth()+1, ano: agoraInicial.getFullYear() };
+    function chavePeriodo(mes, ano) { return `${ano}-${String(mes).padStart(2,'0')}`; }
+    function preencherSeletoresPeriodo(prefixo) {
+      const mesEl = document.getElementById(`mes-${prefixo}`);
+      const anoEl = document.getElementById(`ano-${prefixo}`);
+      nomesMeses.forEach((nome,i) => { const op=document.createElement('option'); op.value=String(i+1); op.textContent=nome; mesEl.appendChild(op); });
+      for (let ano=periodoInicial.ano-15; ano<=periodoInicial.ano+15; ano++) { const op=document.createElement('option'); op.value=String(ano); op.textContent=String(ano); anoEl.appendChild(op); }
+      mesEl.value=String(periodoInicial.mes); anoEl.value=String(periodoInicial.ano);
+    }
+    preencherSeletoresPeriodo('financeiro');
+    preencherSeletoresPeriodo('ambiental');
+    let periodoFinanceiro = {...periodoInicial};
+    let periodoAmbiental = {...periodoInicial};
+    const dadosExemplo = [
+      { id: 1, tipo: 'entrada', descricao: 'Vendas no Balcão (Semana 1)', valor: 3500 },
+      { id: 2, tipo: 'entrada', descricao: 'Encomendas via WhatsApp', valor: 1800 },
+      { id: 3, tipo: 'saida', descricao: 'Compra de Mercadorias / Insumos', valor: 1950 },
+      { id: 4, tipo: 'saida', descricao: 'Conta de Energia e Internet da Loja', valor: 420 },
+      { id: 5, tipo: 'prolabore', descricao: 'Pró-labore do proprietário', valor: 1500 }
+    ];
+    function carregarDados() {
+      try {
+        const salvo = localStorage.getItem(CHAVE_STORAGE) ?? localStorage.getItem(CHAVE_STORAGE_ANTIGA);
+        if (salvo === null) return dadosExemplo.map(item => ({ ...item, periodo: chavePeriodo(periodoInicial.mes, periodoInicial.ano) }));
+        const parsed = JSON.parse(salvo);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(item => item && ['entrada','saida','prolabore'].includes(item.tipo) && typeof item.descricao==='string' && Number.isFinite(Number(item.valor)) && Number(item.valor)>0)
+          .map(item => ({ id: item.id ?? (Date.now()+Math.random()), tipo:item.tipo, descricao:item.descricao, valor:Number(item.valor), periodo:/^\d{4}-\d{2}$/.test(item.periodo||'') ? item.periodo : chavePeriodo(periodoInicial.mes,periodoInicial.ano) }));
+      } catch (erro) { console.error('Não foi possível carregar os dados salvos:',erro); return []; }
+    }
+    let lancamentos = carregarDados();
+    let chartInstance = null;
+    let abaAtiva = 'financeiro';
+    // Exibe o percentual de cada fatia diretamente dentro dos gráficos de rosca.
+    const pluginPercentuais = {
+      id: 'percentuaisNasFatias',
+      afterDatasetsDraw(chart) {
+        const dataset = chart.data.datasets[0];
+        const valores = dataset?.data || [];
+        const total = valores.reduce((soma, valor) => soma + (Number(valor) || 0), 0);
+        if (!total) return;
+        const meta = chart.getDatasetMeta(0);
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.font = 'bold 14px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.shadowColor = 'rgba(0,0,0,0.38)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 1;
+        meta.data.forEach((arco, indice) => {
+          const valor = Number(valores[indice]) || 0;
+          const percentual = valor / total * 100;
+          // Fatias muito pequenas não comportam o texto sem prejudicar a leitura.
+          if (valor <= 0 || percentual < 4) return;
+          const ponto = arco.getCenterPoint();
+          ctx.fillText(`${Math.round(percentual)}%`, ponto.x, ponto.y);
+        });
+        ctx.restore();
+      }
+    };
+    if (window.Chart) Chart.register(pluginPercentuais);
+    const moeda = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+    function formatarMoeda(valor) { return moeda.format(Number.isFinite(valor)?valor:0); }
+    function lancamentosDoPeriodo(periodo=periodoFinanceiro) { return lancamentos.filter(item=>item.periodo===chavePeriodo(periodo.mes,periodo.ano)); }
+    function salvarDados() {
+      try { localStorage.setItem(CHAVE_STORAGE,JSON.stringify(lancamentos)); document.getElementById('mensagem-form').textContent='Lançamentos salvos neste navegador.'; }
+      catch(erro) { console.error('Não foi possível salvar os dados:',erro); document.getElementById('mensagem-form').textContent='Não foi possível salvar. Verifique o espaço disponível no navegador.'; }
+    }
+    function criarCelula(texto,classes='') { const td=document.createElement('td'); td.className=`px-3 py-3 ${classes}`; td.textContent=texto; return td; }
+    function atualizarTabela() {
+      const tbody=document.getElementById('lista-lancamentos'); tbody.replaceChildren();
+      const itens=lancamentosDoPeriodo();
+      if (!itens.length) { const tr=document.createElement('tr'); const td=criarCelula('Nenhum lançamento registrado neste período.','text-center text-slate-400 py-6'); td.colSpan=4; tr.appendChild(td); tbody.appendChild(tr); }
+      else itens.forEach(item=>{
+        const tr=document.createElement('tr'); const nomes={entrada:['Entrada','text-emerald-700 bg-emerald-50'],saida:['Custo da loja','text-rose-700 bg-rose-50'],prolabore:['Pró-labore','text-purple-700 bg-purple-50']}; const [nome,estilo]=nomes[item.tipo];
+        const categoria=criarCelula(''); const badge=document.createElement('span'); badge.className=`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${estilo}`; badge.textContent=nome; categoria.appendChild(badge);
+        const descricao=criarCelula(item.descricao,'min-w-48'); const valor=criarCelula(formatarMoeda(item.valor),'text-right font-semibold tabular-nums');
+        const acao=document.createElement('td'); acao.className='px-3 py-3 text-right'; const botao=document.createElement('button'); botao.type='button'; botao.textContent='Excluir'; botao.className='text-xs font-semibold text-rose-600 hover:text-rose-800 underline focus-ring rounded'; botao.setAttribute('aria-label',`Excluir lançamento: ${item.descricao}`); botao.addEventListener('click',()=>removerItem(item.id)); acao.appendChild(botao); tr.append(categoria,descricao,valor,acao); tbody.appendChild(tr);
+      });
+      document.getElementById('contador-itens').textContent=`${itens.length} ${itens.length===1?'registro':'registros'} em ${nomesMeses[periodoFinanceiro.mes-1]} de ${periodoFinanceiro.ano}`;
+    }
+    function calcularTotais(periodo=periodoFinanceiro) {
+      return lancamentosDoPeriodo(periodo).reduce((t,item)=>{ if(item.tipo==='entrada')t.entradas+=item.valor; if(item.tipo==='saida')t.saidas+=item.valor; if(item.tipo==='prolabore')t.prolabore+=item.valor; return t; },{entradas:0,saidas:0,prolabore:0});
+    }
+    function atualizarAlerta(entradas,saidas,prolabore,saldo) {
+      const box=document.getElementById('alerta-saude'),icone=document.getElementById('alerta-icone'),titulo=document.getElementById('alerta-titulo'),texto=document.getElementById('alerta-texto');
+      let classe='p-4 rounded-xl border flex items-center gap-3 transition-all duration-300 ',nomeIcone='check-circle-2';
+      if(entradas===0&&saidas===0&&prolabore===0){classe+='bg-slate-100 border-slate-200 text-slate-700';nomeIcone='info';titulo.textContent='Aguardando lançamentos';texto.textContent=`Adicione vendas e custos de ${nomesMeses[periodoFinanceiro.mes-1]} para visualizar a análise financeira.`;}
+      else if(saldo<0){classe+='bg-rose-50 border-rose-200 text-rose-800';nomeIcone='alert-triangle';titulo.textContent='Atenção: saldo negativo';texto.textContent='Os custos e as retiradas superam as entradas registradas neste período. Revise os gastos e o caixa.';}
+      else if(entradas>0&&prolabore>(entradas-saidas)*0.7){classe+='bg-amber-50 border-amber-200 text-amber-800';nomeIcone='alert-circle';titulo.textContent='Atenção às retiradas';texto.textContent='O pró-labore representa uma parte elevada do valor que sobra após os custos. Avalie manter uma reserva.';}
+      else{classe+='bg-emerald-50 border-emerald-200 text-emerald-800';titulo.textContent='Saldo positivo registrado';texto.textContent='Até o momento, as entradas cobrem os custos e as retiradas informadas neste período.';}
+      box.className=classe; icone.setAttribute('data-lucide',nomeIcone); if(window.lucide)lucide.createIcons();
+    }
+    function atualizarGrafico(saidas,prolabore,saldo) {
+      const canvas=document.getElementById('graficoFinanceiro'); if(!window.Chart){canvas.parentElement.innerHTML='<p class="text-sm text-rose-600 text-center">Não foi possível carregar o gráfico. Verifique sua conexão.</p>';return;}
+      if(chartInstance)chartInstance.destroy();
+      const valores=[saidas,prolabore,Math.max(saldo,0),Math.max(-saldo,0)]; const labels=['Custos da loja','Pró-labore','Saldo positivo','Déficit']; const cores=['#F43F5E','#9333EA','#10B981','#64748B'];
+      chartInstance=new Chart(canvas.getContext('2d'),{type:'doughnut',data:{labels,datasets:[{data:valores,backgroundColor:cores,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,padding:14,font:{size:11}}},tooltip:{callbacks:{label:c=>`${c.label}: ${formatarMoeda(c.raw)}`}}}}});
+    }
+    function atualizarComparacaoFinanceira() {
+      const anterior=new Date(periodoFinanceiro.ano,periodoFinanceiro.mes-2,1); const periodoAnt={mes:anterior.getMonth()+1,ano:anterior.getFullYear()}; const atual=calcularTotais(); const ant=calcularTotais(periodoAnt); const el=document.getElementById('comparacao-financeira');
+      const temAtual=lancamentosDoPeriodo().length>0,temAnterior=lancamentosDoPeriodo(periodoAnt).length>0;
+      if(!temAtual){el.textContent=`Ainda não há lançamentos em ${nomesMeses[periodoFinanceiro.mes-1]} de ${periodoFinanceiro.ano}.`;return;}
+      if(!temAnterior){el.textContent=`Não há dados de ${nomesMeses[periodoAnt.mes-1]} de ${periodoAnt.ano} para fazer a comparação. Despesas do período: ${formatarMoeda(atual.saidas)}.`;return;}
+      const diferenca=atual.saidas-ant.saidas; const pct=ant.saidas>0?(diferenca/ant.saidas)*100:null; const direcao=diferenca>0?'aumento':diferenca<0?'redução':'sem alteração';
+      el.textContent=`Despesas: ${formatarMoeda(atual.saidas)} em ${nomesMeses[periodoFinanceiro.mes-1]} contra ${formatarMoeda(ant.saidas)} em ${nomesMeses[periodoAnt.mes-1]} — ${direcao} de ${formatarMoeda(Math.abs(diferenca))}${pct===null?'':` (${Math.abs(pct).toFixed(1).replace('.',',')}%)`}.`;
+    }
+    function atualizarSistema() {
+      salvarDados(); const {entradas,saidas,prolabore}=calcularTotais(); const saldo=entradas-saidas-prolabore;
+      document.getElementById('total-entradas').textContent=formatarMoeda(entradas); document.getElementById('total-saidas').textContent=formatarMoeda(saidas); document.getElementById('total-prolabore').textContent=formatarMoeda(prolabore);
+      const elSaldo=document.getElementById('saldo-final'); elSaldo.textContent=formatarMoeda(saldo); elSaldo.className=`text-2xl font-bold mt-1 ${saldo>=0?'text-blue-600':'text-rose-600'}`;
+      atualizarTabela(); atualizarAlerta(entradas,saidas,prolabore,saldo); atualizarGrafico(saidas,prolabore,saldo); atualizarComparacaoFinanceira();
+    }
+    function removerItem(id) { lancamentos=lancamentos.filter(item=>item.id!==id); atualizarSistema(); }
+    function limparDados() {
+      if(abaAtiva==='financeiro'){if(!confirm(`Deseja apagar somente os lançamentos de ${nomesMeses[periodoFinanceiro.mes-1]} de ${periodoFinanceiro.ano}? Os demais meses e os registros de Sustentabilidade serão preservados.`))return; lancamentos=lancamentos.filter(item=>item.periodo!==chavePeriodo(periodoFinanceiro.mes,periodoFinanceiro.ano)); atualizarSistema();}
+      else{if(!confirm(`Deseja apagar somente os registros de ${nomesMeses[periodoAmbiental.mes-1]} de ${periodoAmbiental.ano}? Os demais meses e os lançamentos financeiros serão preservados.`))return; registrosAmbientais=registrosAmbientais.filter(r=>r.data.slice(0,7)!==chavePeriodo(periodoAmbiental.mes,periodoAmbiental.ano)); atualizarAmbiental();}
+    }
+    function carregarExemplo() {
+      if(!confirm(`Isso substituirá os lançamentos de ${nomesMeses[periodoFinanceiro.mes-1]} de ${periodoFinanceiro.ano} pelos dados de exemplo. Os outros meses serão preservados. Continuar?`))return;
+      lancamentos=lancamentos.filter(item=>item.periodo!==chavePeriodo(periodoFinanceiro.mes,periodoFinanceiro.ano));
+      lancamentos.push(...dadosExemplo.map(item=>({...item,id:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+Math.random(),periodo:chavePeriodo(periodoFinanceiro.mes,periodoFinanceiro.ano)}))); atualizarSistema();
+    }
+    function alterarPeriodoFinanceiro() { periodoFinanceiro={mes:Number(document.getElementById('mes-financeiro').value),ano:Number(document.getElementById('ano-financeiro').value)}; atualizarSistema(); }
+    document.getElementById('mes-financeiro').addEventListener('change',alterarPeriodoFinanceiro); document.getElementById('ano-financeiro').addEventListener('change',alterarPeriodoFinanceiro);
+
+    function calcularPreco() {
+      const custo = Number(document.getElementById('calc-custo').value);
+      const taxa = Number(document.getElementById('calc-taxa').value);
+      const margem = Number(document.getElementById('calc-lucro').value);
+      const precoEl = document.getElementById('resultado-preco');
+      const lucroEl = document.getElementById('resultado-lucro-un');
+      const mensagem = document.getElementById('mensagem-calculadora');
+
+      mensagem.textContent = '';
+
+      if (![custo, taxa, margem].every(Number.isFinite) || custo < 0 || taxa < 0 || taxa >= 100 || margem < 0) {
+        precoEl.textContent = '—';
+        lucroEl.textContent = '—';
+        mensagem.textContent = 'Informe valores válidos. A taxa deve ser menor que 100% e o lucro não pode ser negativo.';
+        return;
+      }
+
+      // Lucro desejado como percentual sobre o custo; a taxa é descontada do preço de venda.
+      const lucroDesejado = custo * (margem / 100);
+      const preco = (custo + lucroDesejado) / (1 - taxa / 100);
+      const lucroLiquido = preco - custo - (preco * taxa / 100);
+
+      precoEl.textContent = formatarMoeda(preco);
+      lucroEl.textContent = formatarMoeda(lucroLiquido);
+    }
+
+    document.getElementById('form-lancamento').addEventListener('submit', event => {
+      event.preventDefault();
+
+      const tipo = document.getElementById('tipo').value;
+      const descricao = document.getElementById('descricao').value.trim();
+      const valor = Number(document.getElementById('valor').value);
+
+      if (!descricao || !Number.isFinite(valor) || valor <= 0) {
+        document.getElementById('mensagem-form').textContent = 'Preencha a descrição e informe um valor maior que zero.';
+        return;
+      }
+
+      lancamentos.unshift({
+        id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random(),
+        tipo,
+        descricao,
+        valor: Math.round(valor * 100) / 100,
+        periodo: chavePeriodo(periodoFinanceiro.mes, periodoFinanceiro.ano)
+      });
+
+      document.getElementById('descricao').value = '';
+      document.getElementById('valor').value = '';
+      atualizarSistema();
+    });
+
+    document.getElementById('btn-limpar').addEventListener('click', limparDados);
+    document.getElementById('btn-exemplo').addEventListener('click', carregarExemplo);
+
+
+    // Módulo de sustentabilidade: armazenamento independente do financeiro e filtrado por mês/ano.
+    const CHAVE_AMBIENTAL='pngf_registros_ambientais_v2';
+    const CHAVE_AMBIENTAL_ANTIGA='pngf_registros_ambientais_v1';
+    const tiposAmbientais={agua:{nome:'Água',unidade:'L',cor:'#0EA5E9'},energia:{nome:'Energia',unidade:'kWh',cor:'#F59E0B'},residuos:{nome:'Resíduos',unidade:'kg',cor:'#F97316'},reciclados:{nome:'Reciclados',unidade:'kg',cor:'#10B981'}};
+    function dataLocalISO(){const agora=new Date();const local=new Date(agora.getTime()-agora.getTimezoneOffset()*60000);return local.toISOString().slice(0,10);}
+    function dataDoPeriodo(periodo){const hoje=new Date();const dia=(hoje.getFullYear()===periodo.ano&&hoje.getMonth()+1===periodo.mes)?hoje.getDate():1;return `${periodo.ano}-${String(periodo.mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;}
+    let registrosAmbientais=[];
+    try{const salvo=localStorage.getItem(CHAVE_AMBIENTAL)??localStorage.getItem(CHAVE_AMBIENTAL_ANTIGA);const parsed=salvo?JSON.parse(salvo):[];if(Array.isArray(parsed))registrosAmbientais=parsed.filter(r=>r&&tiposAmbientais[r.tipo]&&typeof r.descricao==='string'&&Number.isFinite(Number(r.quantidade))&&Number(r.quantidade)>0&&/^\d{4}-\d{2}-\d{2}$/.test(r.data)).map(r=>({id:String(r.id||(Date.now()+Math.random())),tipo:r.tipo,descricao:r.descricao,quantidade:Number(r.quantidade),data:r.data,custo:Math.max(0,Number(r.custo)||0)}));}catch(erro){console.warn('Não foi possível carregar os registros ambientais:',erro);}
+    let graficoAmbiental=null,graficoCustosAmbientais=null;
+    function registrosDoPeriodo(){const chave=chavePeriodo(periodoAmbiental.mes,periodoAmbiental.ano);return registrosAmbientais.filter(r=>r.data.slice(0,7)===chave);}
+    function salvarAmbiental(){try{localStorage.setItem(CHAVE_AMBIENTAL,JSON.stringify(registrosAmbientais));document.getElementById('mensagem-ambiental').textContent='Registro salvo neste navegador.';}catch(erro){document.getElementById('mensagem-ambiental').textContent='Não foi possível salvar. Verifique o espaço disponível no navegador.';}}
+    function formatarQuantidade(valor){return new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(valor);}
+    function atualizarResumoAmbiental(){const totais={agua:0,energia:0,residuos:0,reciclados:0};registrosDoPeriodo().forEach(r=>{totais[r.tipo]+=r.quantidade;});document.getElementById('total-agua').textContent=formatarQuantidade(totais.agua)+' L';document.getElementById('total-energia').textContent=formatarQuantidade(totais.energia)+' kWh';document.getElementById('total-residuos').textContent=formatarQuantidade(totais.residuos)+' kg';document.getElementById('total-reciclados').textContent=formatarQuantidade(totais.reciclados)+' kg';}
+    function atualizarTabelaAmbiental(){const tbody=document.getElementById('lista-ambiental');tbody.replaceChildren();const ordenados=registrosDoPeriodo().sort((a,b)=>b.data.localeCompare(a.data));if(!ordenados.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.className='px-3 py-6 text-center text-slate-400';td.textContent='Nenhum registro ambiental neste período.';tr.appendChild(td);tbody.appendChild(tr);}else ordenados.forEach(r=>{const tr=document.createElement('tr'),info=tiposAmbientais[r.tipo];const vals=[info.nome,r.descricao,new Date(r.data+'T12:00:00').toLocaleDateString('pt-BR'),formatarQuantidade(r.quantidade)+' '+info.unidade,r.custo?formatarMoeda(r.custo):'—'];vals.forEach((v,i)=>{const td=document.createElement('td');td.className='px-3 py-3 '+(i===3||i===4?'text-right tabular-nums':'');td.textContent=v;tr.appendChild(td);});const tdAcao=document.createElement('td');tdAcao.className='px-3 py-3 text-right';const btn=document.createElement('button');btn.type='button';btn.textContent='Excluir';btn.className='text-xs font-semibold text-rose-600 hover:text-rose-800 underline focus-ring rounded';btn.setAttribute('aria-label','Excluir registro ambiental: '+r.descricao);btn.addEventListener('click',()=>{registrosAmbientais=registrosAmbientais.filter(x=>x.id!==r.id);atualizarAmbiental();});tdAcao.appendChild(btn);tr.appendChild(tdAcao);tbody.appendChild(tr);});document.getElementById('contador-ambiental').textContent=`${ordenados.length} ${ordenados.length===1?'registro':'registros'} em ${nomesMeses[periodoAmbiental.mes-1]} de ${periodoAmbiental.ano}`;}
+    function atualizarGraficoAmbiental(){const canvas=document.getElementById('graficoAmbiental');if(!window.Chart){canvas.parentElement.innerHTML='<p class="text-sm text-rose-600 text-center">Não foi possível carregar o gráfico. Verifique sua conexão.</p>';return;}const tipo=document.getElementById('filtro-grafico-ambiental').value,info=tiposAmbientais[tipo];const valores=Array.from({length:12},(_,i)=>{const itens=registrosAmbientais.filter(r=>r.tipo===tipo&&r.data.slice(0,4)===String(periodoAmbiental.ano)&&Number(r.data.slice(5,7))===i+1);return itens.length?itens.reduce((s,r)=>s+r.quantidade,0):null;});if(graficoAmbiental)graficoAmbiental.destroy();graficoAmbiental=new Chart(canvas.getContext('2d'),{type:'line',data:{labels:nomesMeses.map(n=>n.slice(0,3)),datasets:[{label:`${info.nome} (${info.unidade})`,data:valores,borderColor:info.cor,backgroundColor:info.cor+'22',fill:true,tension:.3,pointRadius:4,spanGaps:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});document.getElementById('legenda-grafico-ambiental').textContent=`${info.nome} ao longo de ${periodoAmbiental.ano} · Unidade: ${info.unidade}. Meses sem registros ficam sem ponto no gráfico.`;}
+    function atualizarGraficoCustosAmbientais(){const canvas=document.getElementById('graficoCustosAmbientais');if(!window.Chart)return;const atual=registrosDoPeriodo();const categorias=['agua','energia','residuos'];const valores=categorias.map(tipo=>atual.filter(r=>r.tipo===tipo).reduce((s,r)=>s+r.custo,0));if(graficoCustosAmbientais)graficoCustosAmbientais.destroy();const total=valores.reduce((a,b)=>a+b,0);graficoCustosAmbientais=new Chart(canvas.getContext('2d'),{type:'doughnut',data:{labels:['Água','Energia','Resíduos'],datasets:[{data:valores,backgroundColor:['#0EA5E9','#F59E0B','#F97316'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.label}: ${formatarMoeda(c.raw)}`}}}}});document.getElementById('legenda-custos-ambientais').textContent=total>0?`Custos registrados em ${nomesMeses[periodoAmbiental.mes-1]}: ${formatarMoeda(total)}.`:'Informe os custos relacionados à água, energia ou resíduos para visualizar a distribuição.';}
+    function atualizarAmbiental(){salvarAmbiental();atualizarResumoAmbiental();atualizarTabelaAmbiental();atualizarGraficoAmbiental();atualizarGraficoCustosAmbientais();}
+    function alterarPeriodoAmbiental(){periodoAmbiental={mes:Number(document.getElementById('mes-ambiental').value),ano:Number(document.getElementById('ano-ambiental').value)};document.getElementById('ambiental-data').value=dataDoPeriodo(periodoAmbiental);atualizarResumoAmbiental();atualizarTabelaAmbiental();atualizarGraficoAmbiental();atualizarGraficoCustosAmbientais();}
+    document.getElementById('mes-ambiental').addEventListener('change',alterarPeriodoAmbiental);document.getElementById('ano-ambiental').addEventListener('change',alterarPeriodoAmbiental);
+    document.getElementById('form-ambiental').addEventListener('submit',event=>{event.preventDefault();const tipo=document.getElementById('ambiental-tipo').value,descricao=document.getElementById('ambiental-descricao').value.trim(),quantidade=Number(document.getElementById('ambiental-quantidade').value),data=document.getElementById('ambiental-data').value,custoTexto=document.getElementById('ambiental-custo').value,custo=custoTexto===''?0:Number(custoTexto);if(!tiposAmbientais[tipo]||!descricao||!Number.isFinite(quantidade)||quantidade<=0||!data||data.slice(0,7)!==chavePeriodo(periodoAmbiental.mes,periodoAmbiental.ano)||!Number.isFinite(custo)||custo<0){document.getElementById('mensagem-ambiental').textContent='Confira os campos e use uma data dentro do mês e ano selecionados.';return;}registrosAmbientais.unshift({id:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+Math.random(),tipo,descricao,quantidade:Math.round(quantidade*100)/100,data,custo:Math.round(custo*100)/100});document.getElementById('ambiental-descricao').value='';document.getElementById('ambiental-quantidade').value='';document.getElementById('ambiental-custo').value='';atualizarAmbiental();});
+    document.getElementById('filtro-grafico-ambiental').addEventListener('change',atualizarGraficoAmbiental);
+
+    // Alternância entre as duas áreas, sem misturar os respectivos registros.
+    function selecionarAba(nome) {
+      const financeiro = nome === 'financeiro';
+      abaAtiva = financeiro ? 'financeiro' : 'sustentabilidade';
+      document.getElementById('btn-limpar').textContent = financeiro ? 'Zerar mês financeiro' : 'Zerar mês ambiental';
+      const painelFinanceiro = document.getElementById('painel-financeiro');
+      const painelSustentabilidade = document.getElementById('painel-sustentabilidade');
+      painelFinanceiro.hidden = !financeiro;
+      painelSustentabilidade.hidden = financeiro;
+      const painelAtivo = financeiro ? painelFinanceiro : painelSustentabilidade;
+      painelAtivo.classList.remove('painel-animar');
+      void painelAtivo.offsetWidth;
+      painelAtivo.classList.add('painel-animar');
+      const btnFin = document.getElementById('aba-financeiro');
+      const btnSus = document.getElementById('aba-sustentabilidade');
+      btnFin.setAttribute('aria-selected', String(financeiro)); btnSus.setAttribute('aria-selected', String(!financeiro));
+      btnFin.className = financeiro ? 'bg-white text-emerald-800 text-xs font-bold px-4 py-2 rounded-lg transition focus-ring' : 'bg-emerald-900/50 hover:bg-emerald-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition focus-ring';
+      btnSus.className = !financeiro ? 'bg-white text-emerald-800 text-xs font-bold px-4 py-2 rounded-lg transition focus-ring' : 'bg-emerald-900/50 hover:bg-emerald-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition focus-ring';
+      if (!financeiro) atualizarGraficoAmbiental();
+    }
+    document.getElementById('aba-financeiro').addEventListener('click', () => selecionarAba('financeiro'));
+    document.getElementById('aba-sustentabilidade').addEventListener('click', () => selecionarAba('sustentabilidade'));
+
+    // Navegação entre painéis e guias educativos.
+    function mostrarPagina(nome) {
+      document.getElementById('painel-financeiro').hidden=nome!=='financeiro';
+      document.getElementById('painel-sustentabilidade').hidden=nome!=='sustentabilidade';
+      document.getElementById('guia-financeiro').hidden=nome!=='guia-financeiro';
+      document.getElementById('guia-sustentabilidade').hidden=nome!=='guia-sustentabilidade';
+      const guias=nome.startsWith('guia-');
+      document.querySelector('header').hidden=guias;
+      document.querySelector('footer').hidden=guias;
+      if(!guias) selecionarAba(nome);
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+    document.querySelectorAll('[data-abrir-guia]').forEach(btn=>btn.addEventListener('click',()=>mostrarPagina('guia-'+btn.dataset.abrirGuia)));
+    document.querySelectorAll('[data-voltar-painel]').forEach(btn=>btn.addEventListener('click',()=>mostrarPagina(btn.dataset.voltarPainel)));
+
+    const ideiasSustentabilidade = [
+      { nome:'Wangari Maathai', texto:'A proteção da natureza também está ligada à dignidade das comunidades e à construção de um futuro melhor.', foto:'https://commons.wikimedia.org/wiki/Special:FilePath/Wangari_Maathai_portrait.jpg', credito:'https://commons.wikimedia.org/wiki/File:Wangari_Maathai_portrait.jpg' },
+      { nome:'Marina Silva', texto:'A sustentabilidade exige que desenvolvimento econômico, justiça social e conservação ambiental caminhem juntos.', foto:'https://commons.wikimedia.org/wiki/Special:FilePath/Marina_Silva_2024.jpg', credito:'https://commons.wikimedia.org/wiki/File:Marina_Silva_2024.jpg' },
+      { nome:'Rachel Carson', texto:'Observar os efeitos das nossas escolhas sobre o ambiente é um passo essencial para agir com responsabilidade.', foto:'https://commons.wikimedia.org/wiki/Special:FilePath/Rachel_Louise_Carson_portrait.jpg', credito:'https://commons.wikimedia.org/wiki/File:Rachel_Louise_Carson_portrait.jpg' },
+      { nome:'Chico Mendes', texto:'A conservação da floresta e dos recursos naturais também depende de respeitar quem vive e trabalha nesses territórios.', foto:'https://commons.wikimedia.org/wiki/Special:FilePath/Chico_Mendes_in_1988.jpg', credito:'https://commons.wikimedia.org/wiki/File:Chico_Mendes_in_1988.jpg' },
+      { nome:'Greta Thunberg', texto:'Conhecimento e participação pública ajudam a transformar a preocupação ambiental em cobrança por atitudes concretas.', foto:'https://commons.wikimedia.org/wiki/Special:FilePath/Greta_Thunberg.jpg', credito:'https://commons.wikimedia.org/wiki/File:Greta_Thunberg.jpg' },
+      { nome:'Ailton Krenak', texto:'Repensar a relação entre sociedade e natureza é fundamental para imaginar outras formas de viver e produzir.', foto:'https://commons.wikimedia.org/wiki/Special:FilePath/Ailton_Krenak_(5269420566)_(cropped).jpg', credito:'https://commons.wikimedia.org/wiki/File:Ailton_Krenak_(5269420566)_(cropped).jpg' }
+    ];
+    let indiceIdeia = 0;
+    function mostrarIdeia(direcao = 'direita') {
+      const ideia = ideiasSustentabilidade[indiceIdeia];
+      const conteudoVoz = document.getElementById('voz-conteudo');
+      conteudoVoz.classList.remove('animar-direita', 'animar-esquerda');
+      void conteudoVoz.offsetWidth;
+      conteudoVoz.classList.add(direcao === 'esquerda' ? 'animar-esquerda' : 'animar-direita');
+      document.getElementById('voz-frase').textContent = ideia.texto;
+      document.getElementById('voz-nome').textContent = ideia.nome;
+      document.getElementById('voz-contador').textContent = `${indiceIdeia+1} de ${ideiasSustentabilidade.length}`;
+      document.getElementById('voz-card').style.setProperty('--voz-foto', `url(\"${ideia.foto}\")`);
+    }
+    const vozCard = document.getElementById('voz-card');
+    let temporizadorVoz;
+    function avancarIdeia() {
+      indiceIdeia = (indiceIdeia + 1) % ideiasSustentabilidade.length;
+      mostrarIdeia('direita');
+    }
+    function iniciarRotacaoVoz() {
+      clearInterval(temporizadorVoz);
+      temporizadorVoz = setInterval(() => {
+        const painelSustentabilidadeVisivel = !document.getElementById('painel-sustentabilidade').hidden;
+        const paginaVisivel = document.visibilityState === 'visible';
+        const usuarioInteragindo = vozCard.matches(':hover') || vozCard.contains(document.activeElement);
+        if (painelSustentabilidadeVisivel && paginaVisivel && !usuarioInteragindo) avancarIdeia();
+      }, 6000);
+    }
+    document.getElementById('voz-anterior').addEventListener('click', () => {
+      indiceIdeia = (indiceIdeia - 1 + ideiasSustentabilidade.length) % ideiasSustentabilidade.length;
+      mostrarIdeia('esquerda');
+      iniciarRotacaoVoz();
+    });
+    document.getElementById('voz-proxima').addEventListener('click', () => {
+      avancarIdeia();
+      iniciarRotacaoVoz();
+    });
+    iniciarRotacaoVoz();
+    document.getElementById('ambiental-data').value = dataDoPeriodo(periodoAmbiental);
+    atualizarAmbiental();
+    mostrarIdeia();
+
+    calcularPreco();
+    atualizarSistema();
+    if (window.lucide) lucide.createIcons();
+  </script>
+
+  <script>
+    // Controla a entrada na página principal após a apresentação.
+    document.body.classList.add('tela-inicial-ativa');
+    const telaInicial = document.getElementById('tela-inicial');
+    const botaoEntrar = document.getElementById('btn-entrar-site');
+
+    botaoEntrar.addEventListener('click', () => {
+      telaInicial.classList.add('saindo');
+      document.body.classList.remove('tela-inicial-ativa');
+      window.setTimeout(() => telaInicial.remove(), 700);
+    });
+  </script>
+
+</body>
+</html>
